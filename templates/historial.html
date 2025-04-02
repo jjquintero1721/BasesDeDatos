@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Historial de Servicios</h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Buscar por Placa</h5>
+            </div>
+            <div class="card-body">
+                <form action="/historial" method="get">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="placa" placeholder="Ingrese la placa del vehículo" value="{{ placa }}">
+                        <button class="btn btn-primary" type="submit">Buscar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if servicios %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Historial para placa: {{ placa }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo Vehículo</th>
+                                <th>Servicio</th>
+                                <th>Recibido</th>
+                                <th>Entregado</th>
+                                <th>Precio</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for servicio in servicios %}
+                            <tr>
+                                <td>{{ servicio.fecha.strftime('%d-%m-%Y') }}</td>
+                                <td>{{ servicio.tipo_vehiculo }}</td>
+                                <td>{{ servicio.tipo_lavado }}</td>
+                                <td>{{ servicio.hora_recibe }}</td>
+                                <td>{{ servicio.hora_entrega or 'Pendiente' }}</td>
+                                <td>${{ servicio.precio }}</td>
+                                <td>
+                                    {% if servicio.hora_entrega %}
+                                    <span class="badge bg-success">Completado</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">En proceso</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% elif placa %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="alert alert-info">
+            No se encontraron registros para la placa: {{ placa }}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

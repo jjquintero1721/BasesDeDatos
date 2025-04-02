@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="text-center mb-4">Sistema de Gestión para Lavado de Vehículos</h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Tarjetas de información -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Servicios Pendientes</h5>
+                <h2 class="display-4">{{ pendientes|default(0) }}</h2>
+                <a href="/servicios/pendientes" class="btn btn-primary">Ver Detalle</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Ingresos del Día</h5>
+                <h2 class="display-4">${{ ingresos|default(0)|round(2) }}</h2>
+                <a href="/reportes/ingresos" class="btn btn-primary">Ver Reporte</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Insumos Bajos</h5>
+                <h2 class="display-4">{{ alertas|default(0) }}</h2>
+                <a href="/insumos/stock-bajo" class="btn btn-primary">Ver Detalle</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Registro rápido de vehículo -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Registro Rápido de Vehículo</h5>
+            </div>
+            <div class="card-body">
+                <form action="/registro" method="post">
+                    <div class="mb-3">
+                        <label for="placa" class="form-label">Placa</label>
+                        <input type="text" class="form-control" id="placa" name="placa" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="tipo_vehiculo" class="form-label">Tipo de Vehículo</label>
+                            <select class="form-select" id="tipo_vehiculo" name="tipo_vehiculo" required>
+                                <option value="" selected disabled>Seleccionar...</option>
+                                {% for tipo in tipos_vehiculos %}
+                                <option value="{{ tipo.ID }}">{{ tipo.Tipo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="tipo_lavado" class="form-label">Tipo de Lavado</label>
+                            <select class="form-select" id="tipo_lavado" name="tipo_lavado" required>
+                                <option value="" selected disabled>Seleccionar...</option>
+                                {% for tipo in tipos_lavado %}
+                                <option value="{{ tipo.ID }}">{{ tipo.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="empleado_recibe" class="form-label">Empleado que Recibe</label>
+                            <select class="form-select" id="empleado_recibe" name="empleado_recibe" required>
+                                <option value="" selected disabled>Seleccionar...</option>
+                                {% for emp in empleados %}
+                                <option value="{{ emp.ID }}">{{ emp.nombre }} {{ emp.apellidos }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="empleado_lava" class="form-label">Empleado que Lava</label>
+                            <select class="form-select" id="empleado_lava" name="empleado_lava" required>
+                                <option value="" selected disabled>Seleccionar...</option>
+                                {% for emp in empleados %}
+                                <option value="{{ emp.ID }}">{{ emp.nombre }} {{ emp.apellidos }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Registrar Vehículo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Búsqueda de historial -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Consultar Historial por Placa</h5>
+            </div>
+            <div class="card-body">
+                <form action="/historial" method="get" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="placa" placeholder="Ingrese la placa del vehículo">
+                        <button class="btn btn-primary" type="submit">Buscar</button>
+                    </div>
+                </form>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Carga de Trabajo por Empleado</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            {% for emp in empleados[:5] %}
+                            <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                {{ emp.nombre }} {{ emp.apellidos }}
+                                <span class="badge bg-primary rounded-pill">0</span>
+                            </a>
+                            {% endfor %}
+                        </div>
+                        <a href="/carga-trabajo" class="btn btn-outline-primary w-100 mt-3">Ver Todos</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

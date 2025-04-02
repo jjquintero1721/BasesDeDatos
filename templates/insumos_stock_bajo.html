@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Insumos con Stock Bajo</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">Insumos que requieren reposición</h5>
+            </div>
+            <div class="card-body">
+                {% if insumos %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Precio</th>
+                                <th>Stock Actual</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for insumo in insumos %}
+                            <tr>
+                                <td>{{ insumo.ID }}</td>
+                                <td>{{ insumo.nombre }}</td>
+                                <td>${{ insumo.precio }}</td>
+                                <td>
+                                    <span class="badge bg-danger">{{ insumo.stock }}</span>
+                                </td>
+                                <td>{{ insumo.estado }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#reposicionModal" data-insumo-id="{{ insumo.ID }}" data-insumo-nombre="{{ insumo.nombre }}">
+                                        Reponer
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-success">
+                    No hay insumos con stock bajo en este momento.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para reponer insumos -->
+<div class="modal fade" id="reposicionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reponer Insumo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="/insumos/reponer" method="post">
+                    <input type="hidden" id="insumo_id" name="insumo_id">
+                    <div class="mb-3">
+                        <label for="insumo_nombre" class="form-label">Insumo</label>
+                        <input type="text" class="form-control" id="insumo_nombre" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cantidad" class="form-label">Cantidad a Reponer</label>
+                        <input type="number" class="form-control" id="cantidad" name="cantidad" min="1" value="10" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Confirmar Reposición</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Script para pasar datos del insumo al modal
+    document.addEventListener('DOMContentLoaded', function() {
+        const reposicionModal = document.getElementById('reposicionModal');
+        if (reposicionModal) {
+            reposicionModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const insumoId = button.getAttribute('data-insumo-id');
+                const insumoNombre = button.getAttribute('data-insumo-nombre');
+                document.getElementById('insumo_id').value = insumoId;
+                document.getElementById('insumo_nombre').value = insumoNombre;
+            });
+        }
+    });
+</script>
+{% endblock %}

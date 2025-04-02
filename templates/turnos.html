@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Gestión de Turnos</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Registrar Nuevo Turno</h5>
+            </div>
+            <div class="card-body">
+                <form action="/turnos/add" method="post">
+                    <div class="mb-3">
+                        <label for="empleado" class="form-label">Empleado</label>
+                        <select class="form-select" id="empleado" name="empleado" required>
+                            <option value="" selected disabled>Seleccionar...</option>
+                            {% for emp in empleados %}
+                            <option value="{{ emp.ID }}">{{ emp.nombre }} {{ emp.apellidos }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dia" class="form-label">Día</label>
+                        <select class="form-select" id="dia" name="dia" required>
+                            <option value="" selected disabled>Seleccionar...</option>
+                            <option value="Lunes">Lunes</option>
+                            <option value="Martes">Martes</option>
+                            <option value="Miércoles">Miércoles</option>
+                            <option value="Jueves">Jueves</option>
+                            <option value="Viernes">Viernes</option>
+                            <option value="Sábado">Sábado</option>
+                            <option value="Domingo">Domingo</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="jornada" class="form-label">Jornada</label>
+                        <select class="form-select" id="jornada" name="jornada" required>
+                            <option value="" selected disabled>Seleccionar...</option>
+                            {% for jornada in jornadas %}
+                            <option value="{{ jornada.ID }}">{{ jornada.hora_inicio }} - {{ jornada.hora_final }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Registrar Turno</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Calendario de Turnos</h5>
+            </div>
+            <div class="card-body">
+                <!-- Selector de semana -->
+                <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <button class="btn btn-outline-primary">&lt; Semana anterior</button>
+                    <h5 class="mb-0">Semana actual</h5>
+                    <button class="btn btn-outline-primary">Semana siguiente &gt;</button>
+                </div>
+                
+                <!-- Calendario semanal -->
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th width="14%">Hora</th>
+                                <th width="12%">Lunes</th>
+                                <th width="12%">Martes</th>
+                                <th width="12%">Miércoles</th>
+                                <th width="12%">Jueves</th>
+                                <th width="12%">Viernes</th>
+                                <th width="12%">Sábado</th>
+                                <th width="12%">Domingo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Jornada mañana -->
+                            <tr>
+                                <td>08:00 - 12:00</td>
+                                {% for dia in ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] %}
+                                <td>
+                                    {% for turno in turnos %}
+                                        {% if turno.dia == dia and turno.hora_inicio == '08:00:00' %}
+                                        <div class="badge bg-primary text-wrap mb-1" style="width: 100%;">
+                                            {{ turno.nombre }} {{ turno.apellidos }}
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Jornada tarde -->
+                            <tr>
+                                <td>12:00 - 16:00</td>
+                                {% for dia in ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] %}
+                                <td>
+                                    {% for turno in turnos %}
+                                        {% if turno.dia == dia and turno.hora_inicio == '12:00:00' %}
+                                        <div class="badge bg-success text-wrap mb-1" style="width: 100%;">
+                                            {{ turno.nombre }} {{ turno.apellidos }}
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            
+                            <!-- Jornada noche -->
+                            <tr>
+                                <td>16:00 - 20:00</td>
+                                {% for dia in ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] %}
+                                <td>
+                                    {% for turno in turnos %}
+                                        {% if turno.dia == dia and turno.hora_inicio == '16:00:00' %}
+                                        <div class="badge bg-info text-wrap mb-1" style="width: 100%;">
+                                            {{ turno.nombre }} {{ turno.apellidos }}
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

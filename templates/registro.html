@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Registro de Vehículo</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Formulario de Registro</h5>
+            </div>
+            <div class="card-body">
+                <form action="/registro" method="post">
+                    <div class="mb-3">
+                        <label for="placa" class="form-label">Placa</label>
+                        <input type="text" class="form-control" id="placa" name="placa" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="tipo_vehiculo" class="form-label">Tipo de Vehículo</label>
+                            <select class="form-select" id="tipo_vehiculo" name="tipo_vehiculo" required>
+                                <option value="" selected disabled>Seleccionar...</option>
+                                {% for tipo in tipos_vehiculos %}
+                                <option value="{{ tipo.ID }}">{{ tipo.Tipo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="tipo_lavado" class="form-label">Tipo de Lavado</label>
+                            <select class="form-select" id="tipo_lavado" name="tipo_lavado" required>
+                                <option value="" selected disabled>Seleccionar...</option>
+                                {% for tipo in tipos_lavado %}
+                                <option value="{{ tipo.ID }}">{{ tipo.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="empleado_recibe" class="form-label">Empleado que Recibe</label>
+                            <select class="form-select" id="empleado_recibe" name="empleado_recibe" required>
+                                <option value="" selected disabled>Seleccionar...</option>
+                                {% for emp in empleados %}
+                                <option value="{{ emp.ID }}">{{ emp.nombre }} {{ emp.apellidos }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="empleado_lava" class="form-label">Empleado que Lava</label>
+                            <select class="form-select" id="empleado_lava" name="empleado_lava" required>
+                                <option value="" selected disabled>Seleccionar...</option>
+                                {% for emp in empleados %}
+                                <option value="{{ emp.ID }}">{{ emp.nombre }} {{ emp.apellidos }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Registrar Vehículo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
