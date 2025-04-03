@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Cotización de Productos</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Información del Proveedor</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Nombre:</th>
+                        <td>{{ proveedor.nombre }}</td>
+                    </tr>
+                    <tr>
+                        <th>Correo:</th>
+                        <td>{{ proveedor.correo }}</td>
+                    </tr>
+                    <tr>
+                        <th>Teléfono:</th>
+                        <td>{{ proveedor.telefono }}</td>
+                    </tr>
+                    <tr>
+                        <th>Fecha de registro:</th>
+                        <td>{{ proveedor.fecha_registro.strftime('%d-%m-%Y') }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Cotizar Producto</h5>
+            </div>
+            <div class="card-body">
+                {% if insumos_publicados %}
+                <form action="{{ url_for('cotizar_productos', proveedor_id=proveedor.ID) }}" method="post">
+                    <div class="mb-3">
+                        <label for="insumo_id" class="form-label">Producto</label>
+                        <select class="form-select" id="insumo_id" name="insumo_id" required>
+                            <option value="" selected disabled>Seleccionar producto...</option>
+                            {% for insumo in insumos_publicados %}
+                            <option value="{{ insumo.ID }}">{{ insumo.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="precio" class="form-label">Precio Ofertado</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="precio" name="precio" step="0.01" min="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Enviar Cotización</button>
+                </form>
+                {% else %}
+                <div class="alert alert-info">
+                    No hay productos disponibles para cotizar en este momento.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Mis Cotizaciones</h5>
+            </div>
+            <div class="card-body">
+                {% if cotizaciones %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Precio</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cotizacion in cotizaciones %}
+                            <tr>
+                                <td>{{ cotizacion.nombre_insumo }}</td>
+                                <td>${{ cotizacion.precio }}</td>
+                                <td>{{ cotizacion.fecha_cotizacion.strftime('%d-%m-%Y') }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if cotizacion.estado == 'Aceptada' else 'warning' if cotizacion.estado == 'Pendiente' else 'danger' }}">
+                                        {{ cotizacion.estado }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    Aún no has enviado cotizaciones.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

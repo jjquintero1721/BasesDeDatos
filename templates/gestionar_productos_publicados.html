@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Gestionar Productos para Cotización</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Listado de Productos</h5>
+            </div>
+            <div class="card-body">
+                {% if insumos %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Precio Actual</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for insumo in insumos %}
+                            <tr>
+                                <td>{{ insumo.ID }}</td>
+                                <td>{{ insumo.nombre }}</td>
+                                <td>${{ insumo.precio }}</td>
+                                <td>
+                                    {% if insumo.publicado %}
+                                    <span class="badge bg-success">Publicado para cotización</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">No publicado</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form action="{{ url_for('gestionar_productos_publicados') }}" method="post" class="d-inline">
+                                        <input type="hidden" name="insumo_id" value="{{ insumo.ID }}">
+                                        {% if insumo.publicado %}
+                                        <input type="hidden" name="accion" value="despublicar">
+                                        <button type="submit" class="btn btn-sm btn-warning">Quitar de cotizaciones</button>
+                                        {% else %}
+                                        <input type="hidden" name="accion" value="publicar">
+                                        <button type="submit" class="btn btn-sm btn-primary">Publicar para cotizar</button>
+                                        {% endif %}
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    No hay insumos disponibles en el sistema.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

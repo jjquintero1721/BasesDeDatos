@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <h1 class="mb-4">Generar Enlace para Evaluación</h1>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Ingrese la placa del vehículo</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('generar_enlace') }}" method="post">
+                    <div class="mb-3">
+                        <label for="placa" class="form-label">Placa del Vehículo</label>
+                        <input type="text" class="form-control" id="placa" name="placa" required>
+                        <div class="form-text">Ingrese la placa del vehículo para generar un enlace de evaluación.</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Generar Enlace</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -43,7 +43,67 @@
                     <li class="nav-item">
                         <a class="nav-link" href="/turnos">Turnos</a>
                     </li>
+                                        <!-- Añadir estos elementos al menú de navegación del archivo base.html -->
+
+                    <!-- Después de la sección de Reportes -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="evaluacionesDropdown" role="button" data-bs-toggle="dropdown">
+                            Evaluaciones
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/generar-enlace">Generar Enlace</a></li>
+                            <li><a class="dropdown-item" href="/reporte/evaluaciones">Ver Evaluaciones</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="cotizacionesDropdown" role="button" data-bs-toggle="dropdown">
+                            Cotizaciones
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/admin/insumos/publicar">Gestionar Productos</a></li>
+                            <li><a class="dropdown-item" href="/reporte/cotizaciones">Ver Cotizaciones</a></li>
+                            <li><a class="dropdown-item" href="/proveedor/registro">Registro Proveedor</a></li>
+                        </ul>
+                    </li>
                 </ul>
+                <!-- Añadir después del menú principal y antes del cierre del div.collapse -->
+            
+<!-- Área de proveedores a la derecha del menú -->
+<!-- Actualización del menú de proveedores -->
+<ul class="navbar-nav ms-auto">
+    {% if session.get('proveedor_logueado') %}
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="proveedorDropdown" role="button" data-bs-toggle="dropdown">
+                Hola, {{ session.get('proveedor_nombre', 'Proveedor') }}
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item" href="{{ url_for('portal_proveedores') }}">
+                        Panel Principal
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="{{ url_for('cotizar_productos', proveedor_id=session.get('proveedor_id')) }}">
+                        Mis Cotizaciones
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" href="{{ url_for('logout_proveedor') }}">
+                        Cerrar Sesión
+                    </a>
+                </li>
+            </ul>
+        </li>
+    {% else %}
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('login_proveedor') }}">
+                Acceso Proveedores
+            </a>
+        </li>
+    {% endif %}
+</ul>
             </div>
         </div>
     </nav>

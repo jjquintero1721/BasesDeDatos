@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Portal de Proveedores</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Bienvenido, {{ proveedor.nombre }}</h5>
+            </div>
+            <div class="card-body">
+                <p class="lead">Desde el portal de proveedores puedes enviar cotizaciones para los productos que el lavadero de vehículos necesita adquirir.</p>
+                
+                <div class="mt-4">
+                    <a href="{{ url_for('cotizar_productos', proveedor_id=proveedor.ID) }}" class="btn btn-primary">
+                        <i class="bi bi-cash-coin"></i> Ir a Cotizaciones
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Mis Cotizaciones Recientes</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if cotizaciones_recientes %}
+                        <div class="list-group">
+                            {% for cotizacion in cotizaciones_recientes %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ cotizacion.nombre_insumo }}</h6>
+                                    <small>{{ cotizacion.fecha_cotizacion.strftime('%d-%m-%Y') }}</small>
+                                </div>
+                                <p class="mb-1">Precio: ${{ cotizacion.precio }}</p>
+                                <small class="text-muted">
+                                    Estado: 
+                                    <span class="badge bg-{{ 'success' if cotizacion.estado == 'Aceptada' else 'warning' if cotizacion.estado == 'Pendiente' else 'danger' }}">
+                                        {{ cotizacion.estado }}
+                                    </span>
+                                </small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            No tienes cotizaciones recientes.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Productos Disponibles para Cotizar</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if insumos_publicados %}
+                        <div class="list-group">
+                            {% for insumo in insumos_publicados %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ insumo.nombre }}</h6>
+                                    <small>ID: {{ insumo.ID }}</small>
+                                </div>
+                                <p class="mb-1">Precio actual: ${{ insumo.precio }}</p>
+                                <div class="mt-2">
+                                    <a href="{{ url_for('cotizar_productos', proveedor_id=proveedor.ID) }}" class="btn btn-sm btn-outline-primary">Cotizar</a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            No hay productos disponibles para cotizar en este momento.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

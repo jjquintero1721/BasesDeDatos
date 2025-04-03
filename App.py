@@ -3,9 +3,15 @@ import mysql.connector
 from datetime import datetime
 from decimal import Decimal
 import os
+import hashlib
+from flask import session, redirect, url_for
 
 app = Flask(__name__)
-app.secret_key = 'lavadovehiculos_secret_key'
+import os
+import secrets
+
+# Generar clave secreta más segura (actualizar esta línea en App.py)
+app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 
 # Configuración de la base de datos
 DB_CONFIG = {
@@ -451,5 +457,427 @@ def safe_round(value, precision=2):
     except (ValueError, TypeError):
         return 0
 
+# Estas funciones deben añadirse al archivo App.py existente
+
+# RQ-UF44 - Evaluación del servicio
+@app.route('/evaluar/<string:placa>', methods=['GET', 'POST'])
+def evaluar_servicio(placa):
+    if request.method == 'POST':
+        servicio_id = request.form.get('servicio_id')
+        tiempo_espera = request.form.get('tiempo_espera')
+        amabilidad_personal = request.form.get('amabilidad_personal')
+        calidad_servicio = request.form.get('calidad_servicio')
+        
+        conn, cursor = get_db_connection()
+        
+        # Verificar que el servicio existe y corresponde a la placa
+        cursor.execute("SELECT ID FROM servicio WHERE ID = %s AND placa = %s", (servicio_id, placa))
+        if not cursor.fetchone():
+            conn.close()
+            flash('El servicio no existe o no corresponde a la placa indicada', 'danger')
+            return redirect(url_for('evaluar_servicio', placa=placa))
+        
+        # Insertar evaluación
+        cursor.execute("""
+            INSERT INTO evaluaciones (id_servicio, tiempo_espera, amabilidad_personal, calidad_servicio, fecha_evaluacion)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (servicio_id, tiempo_espera, amabilidad_personal, calidad_servicio, datetime.now()))
+        
+        conn.commit()
+        conn.close()
+        
+        flash('¡Gracias por evaluar nuestro servicio!', 'success')
+        return render_template('evaluacion_exitosa.html')
+    
+    # Obtener servicios de la placa para mostrar en el formulario
+    conn, cursor = get_db_connection()
+    cursor.execute("""
+        SELECT s.ID, s.fecha, t.nombre as tipo_lavado, v.Tipo as tipo_vehiculo
+        FROM servicio s
+        JOIN tiposlavado t ON s.id_tipolavado = t.ID
+        JOIN vehiculos v ON s.id_tipovehiculo = v.ID
+        WHERE s.placa = %s AND s.hora_entrega IS NOT NULL
+        ORDER BY s.fecha DESC
+        LIMIT 5
+    """, (placa,))
+    
+    servicios = cursor.fetchall()
+    conn.close()
+    
+    return render_template('evaluar_servicio.html', placa=placa, servicios=servicios)
+
+@app.route('/generar-enlace', methods=['GET', 'POST'])
+def generar_enlace():
+    if request.method == 'POST':
+        placa = request.form.get('placa')
+        
+        if not placa:
+            flash('Debe ingresar una placa', 'danger')
+            return redirect(url_for('index'))
+        
+        # Verificar que la placa existe en el sistema
+        conn, cursor = get_db_connection()
+        cursor.execute("SELECT ID FROM servicio WHERE placa = %s LIMIT 1", (placa,))
+        if not cursor.fetchone():
+            conn.close()
+            flash('No se encontraron servicios para esta placa', 'warning')
+            return redirect(url_for('index'))
+        
+        conn.close()
+        
+        # Generar URL para la evaluación
+        enlace = url_for('evaluar_servicio', placa=placa, _external=True)
+        
+        return render_template('enlace_evaluacion.html', enlace=enlace, placa=placa)
+    
+    return render_template('generar_enlace.html')
+
+@app.route('/reporte/evaluaciones')
+def reporte_evaluaciones():
+    conn, cursor = get_db_connection()
+    
+    cursor.execute("""
+        SELECT e.*, s.placa, s.fecha as fecha_servicio, 
+               t.nombre as tipo_lavado, v.Tipo as tipo_vehiculo
+        FROM evaluaciones e
+        JOIN servicio s ON e.id_servicio = s.ID
+        JOIN tiposlavado t ON s.id_tipolavado = t.ID
+        JOIN vehiculos v ON s.id_tipovehiculo = v.ID
+        ORDER BY e.fecha_evaluacion DESC
+    """)
+    
+    evaluaciones = cursor.fetchall()
+    
+    # Calcular promedios
+    cursor.execute("""
+        SELECT 
+            AVG(tiempo_espera) as promedio_tiempo_espera,
+            AVG(amabilidad_personal) as promedio_amabilidad,
+            AVG(calidad_servicio) as promedio_calidad
+        FROM evaluaciones
+    """)
+    
+    promedios = cursor.fetchone()
+    conn.close()
+    
+    return render_template('reporte_evaluaciones.html', evaluaciones=evaluaciones, promedios=promedios)
+
+# RQ-UF45 - Módulo de cotización de productos
+@app.route('/proveedor/registro', methods=['GET', 'POST'])
+def registro_proveedor():
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        correo = request.form.get('correo')
+        password = request.form.get('password')
+        password_confirm = request.form.get('password_confirm')
+        telefono = request.form.get('telefono')
+        
+        # Validaciones
+        if password != password_confirm:
+            flash('Las contraseñas no coinciden', 'danger')
+            return redirect(url_for('registro_proveedor'))
+        
+        if len(password) < 6:
+            flash('La contraseña debe tener al menos 6 caracteres', 'danger')
+            return redirect(url_for('registro_proveedor'))
+        
+        # Hashear la contraseña
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        
+        conn, cursor = get_db_connection()
+        
+        # Verificar si ya existe un proveedor con ese correo
+        cursor.execute("SELECT ID FROM proveedores WHERE correo = %s", (correo,))
+        if cursor.fetchone():
+            conn.close()
+            flash('Ya existe un proveedor registrado con ese correo', 'danger')
+            return redirect(url_for('registro_proveedor'))
+        
+        # Insertar proveedor con contraseña
+        cursor.execute("""
+            INSERT INTO proveedores (nombre, correo, password, telefono, fecha_registro, estado)
+            VALUES (%s, %s, %s, %s, %s, 'Activo')
+        """, (nombre, correo, hashed_password, telefono, datetime.now()))
+        
+        conn.commit()
+        
+        # Obtener el ID del proveedor recién creado
+        cursor.execute("SELECT LAST_INSERT_ID() as id")
+        proveedor_id = cursor.fetchone()['id']
+        
+        conn.close()
+        
+        # Iniciar sesión automáticamente
+        session['proveedor_id'] = proveedor_id
+        session['proveedor_nombre'] = nombre
+        session['proveedor_logueado'] = True
+        
+        flash('Proveedor registrado correctamente. Ahora puede cotizar productos.', 'success')
+        return redirect(url_for('cotizar_productos', proveedor_id=proveedor_id))
+    
+    return render_template('registro_proveedor.html')
+
+@app.route('/proveedor/<int:proveedor_id>/cotizar', methods=['GET', 'POST'])
+def cotizar_productos(proveedor_id):
+    
+    if 'proveedor_logueado' not in session or not session['proveedor_logueado'] or session['proveedor_id'] != proveedor_id:
+        flash('Debes iniciar sesión para acceder a esta página', 'warning')
+        return redirect(url_for('login_proveedor'))
+    
+    conn, cursor = get_db_connection()
+    
+    # Verificar que el proveedor existe
+    cursor.execute("SELECT * FROM proveedores WHERE ID = %s", (proveedor_id,))
+    proveedor = cursor.fetchone()
+    
+    if not proveedor:
+        conn.close()
+        flash('Proveedor no encontrado', 'danger')
+        return redirect(url_for('login_proveedor'))
+    
+    if request.method == 'POST':
+        insumo_id = request.form.get('insumo_id')
+        precio = request.form.get('precio')
+        
+        # Verificar si ya existe una cotización para este proveedor e insumo
+        cursor.execute("""
+            SELECT ID FROM cotizaciones
+            WHERE id_proveedor = %s AND id_insumo = %s
+        """, (proveedor_id, insumo_id))
+        
+        cotizacion_existente = cursor.fetchone()
+        
+        if cotizacion_existente:
+            # Actualizar cotización existente
+            cursor.execute("""
+                UPDATE cotizaciones
+                SET precio = %s, fecha_cotizacion = %s
+                WHERE ID = %s
+            """, (precio, datetime.now(), cotizacion_existente['ID']))
+            flash('Cotización actualizada correctamente', 'success')
+        else:
+            # Insertar nueva cotización
+            cursor.execute("""
+                INSERT INTO cotizaciones (id_proveedor, id_insumo, precio, fecha_cotizacion, estado)
+                VALUES (%s, %s, %s, %s, 'Pendiente')
+            """, (proveedor_id, insumo_id, precio, datetime.now()))
+            flash('Cotización registrada correctamente', 'success')
+        
+        conn.commit()
+    
+    # Obtener insumos publicados para cotizar
+    cursor.execute("""
+        SELECT i.*, ip.ID as id_publicado
+        FROM insumos i
+        JOIN insumos_publicados ip ON i.ID = ip.id_insumo
+        WHERE ip.estado = 'Activo'
+        ORDER BY i.nombre
+    """)
+    
+    insumos_publicados = cursor.fetchall()
+    
+    # Obtener cotizaciones existentes del proveedor
+    cursor.execute("""
+        SELECT c.*, i.nombre as nombre_insumo
+        FROM cotizaciones c
+        JOIN insumos i ON c.id_insumo = i.ID
+        WHERE c.id_proveedor = %s
+        ORDER BY c.fecha_cotizacion DESC
+    """, (proveedor_id,))
+    
+    cotizaciones = cursor.fetchall()
+    
+    conn.close()
+    
+    return render_template('cotizar_productos.html', 
+                          proveedor=proveedor, 
+                          insumos_publicados=insumos_publicados, 
+                          cotizaciones=cotizaciones)
+
+@app.route('/admin/insumos/publicar', methods=['GET', 'POST'])
+def gestionar_productos_publicados():
+    conn, cursor = get_db_connection()
+    
+    if request.method == 'POST':
+        insumo_id = request.form.get('insumo_id')
+        accion = request.form.get('accion')
+        
+        if accion == 'publicar':
+            # Verificar si ya está publicado
+            cursor.execute("SELECT ID FROM insumos_publicados WHERE id_insumo = %s", (insumo_id,))
+            if cursor.fetchone():
+                # Actualizar estado si ya existe
+                cursor.execute("""
+                    UPDATE insumos_publicados
+                    SET estado = 'Activo', fecha_publicacion = %s
+                    WHERE id_insumo = %s
+                """, (datetime.now(), insumo_id))
+            else:
+                # Insertar nuevo registro
+                cursor.execute("""
+                    INSERT INTO insumos_publicados (id_insumo, fecha_publicacion, estado)
+                    VALUES (%s, %s, 'Activo')
+                """, (insumo_id, datetime.now()))
+            
+            flash('Insumo publicado correctamente para cotización', 'success')
+            
+        elif accion == 'despublicar':
+            cursor.execute("""
+                UPDATE insumos_publicados
+                SET estado = 'Inactivo'
+                WHERE id_insumo = %s
+            """, (insumo_id,))
+            
+            flash('Insumo retirado de cotizaciones', 'success')
+        
+        conn.commit()
+    
+    # Obtener todos los insumos
+    cursor.execute("""
+        SELECT i.*, 
+               CASE WHEN ip.estado = 'Activo' THEN 1 ELSE 0 END as publicado
+        FROM insumos i
+        LEFT JOIN insumos_publicados ip ON i.ID = ip.id_insumo
+        WHERE i.estado = 'Disponible'
+        ORDER BY i.nombre
+    """)
+    
+    insumos = cursor.fetchall()
+    
+    conn.close()
+    
+    return render_template('gestionar_productos_publicados.html', insumos=insumos)
+
+@app.route('/reporte/cotizaciones')
+def reporte_cotizaciones():
+    conn, cursor = get_db_connection()
+    
+    cursor.execute("""
+        SELECT c.*, i.nombre as nombre_insumo, i.precio as precio_actual,
+               p.nombre as nombre_proveedor, p.correo, p.telefono
+        FROM cotizaciones c
+        JOIN insumos i ON c.id_insumo = i.ID
+        JOIN proveedores p ON c.id_proveedor = p.ID
+        ORDER BY i.nombre, c.precio ASC
+    """)
+    
+    cotizaciones = cursor.fetchall()
+    
+    # Agrupar cotizaciones por insumo
+    insumos_cotizados = {}
+    for cotizacion in cotizaciones:
+        if cotizacion['id_insumo'] not in insumos_cotizados:
+            insumos_cotizados[cotizacion['id_insumo']] = {
+                'nombre': cotizacion['nombre_insumo'],
+                'precio_actual': cotizacion['precio_actual'],
+                'cotizaciones': []
+            }
+        
+        insumos_cotizados[cotizacion['id_insumo']]['cotizaciones'].append({
+            'id': cotizacion['ID'],
+            'proveedor': cotizacion['nombre_proveedor'],
+            'correo': cotizacion['correo'],
+            'telefono': cotizacion['telefono'],
+            'precio': cotizacion['precio'],
+            'fecha': cotizacion['fecha_cotizacion'],
+            'estado': cotizacion['estado']
+        })
+    
+    conn.close()
+    
+    return render_template('reporte_cotizaciones.html', insumos_cotizados=insumos_cotizados)
+
+@app.route('/proveedor/login', methods=['GET', 'POST'])
+def login_proveedor():
+    if request.method == 'POST':
+        correo = request.form.get('correo')
+        password = request.form.get('password')
+        
+        # Hashear contraseña
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        
+        conn, cursor = get_db_connection()
+        
+        # Buscar proveedor por correo
+        cursor.execute("SELECT * FROM proveedores WHERE correo = %s", (correo,))
+        proveedor = cursor.fetchone()
+        
+        if proveedor and proveedor['password'] == hashed_password:
+            # Guardar información en la sesión
+            session['proveedor_id'] = proveedor['ID']
+            session['proveedor_nombre'] = proveedor['nombre']
+            session['proveedor_logueado'] = True
+            
+            flash(f'Bienvenido, {proveedor["nombre"]}', 'success')
+            return redirect(url_for('cotizar_productos', proveedor_id=proveedor['ID']))
+        else:
+            flash('Credenciales incorrectas. Por favor, inténtalo de nuevo.', 'danger')
+        
+        conn.close()
+    
+    return render_template('login_proveedor.html')
+
+@app.route('/proveedor/logout')
+def logout_proveedor():
+    # Limpiar sesión
+    session.pop('proveedor_id', None)
+    session.pop('proveedor_nombre', None)
+    session.pop('proveedor_logueado', None)
+    
+    flash('Has cerrado sesión correctamente', 'success')
+    return redirect(url_for('login_proveedor'))
+
+# Ruta para el portal de proveedores
+@app.route('/proveedor/portal')
+def portal_proveedores():
+    # Verificar si el proveedor está logueado
+    if 'proveedor_logueado' not in session or not session['proveedor_logueado']:
+        flash('Debes iniciar sesión para acceder a esta página', 'warning')
+        return redirect(url_for('login_proveedor'))
+    
+    proveedor_id = session['proveedor_id']
+    
+    conn, cursor = get_db_connection()
+    
+    # Obtener información del proveedor
+    cursor.execute("SELECT * FROM proveedores WHERE ID = %s", (proveedor_id,))
+    proveedor = cursor.fetchone()
+    
+    if not proveedor:
+        conn.close()
+        flash('Proveedor no encontrado', 'danger')
+        return redirect(url_for('login_proveedor'))
+    
+    # Obtener cotizaciones recientes del proveedor
+    cursor.execute("""
+        SELECT c.*, i.nombre as nombre_insumo
+        FROM cotizaciones c
+        JOIN insumos i ON c.id_insumo = i.ID
+        WHERE c.id_proveedor = %s
+        ORDER BY c.fecha_cotizacion DESC
+        LIMIT 5
+    """, (proveedor_id,))
+    
+    cotizaciones_recientes = cursor.fetchall()
+    
+    # Obtener insumos publicados para cotizar
+    cursor.execute("""
+        SELECT i.*, ip.ID as id_publicado
+        FROM insumos i
+        JOIN insumos_publicados ip ON i.ID = ip.id_insumo
+        WHERE ip.estado = 'Activo'
+        ORDER BY i.nombre
+        LIMIT 5
+    """)
+    
+    insumos_publicados = cursor.fetchall()
+    
+    conn.close()
+    
+    return render_template('portal_proveedores.html', 
+                          proveedor=proveedor, 
+                          cotizaciones_recientes=cotizaciones_recientes, 
+                          insumos_publicados=insumos_publicados)
+    
 if __name__ == '__main__':
     app.run(debug=True)

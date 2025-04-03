@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Enlace para Evaluación</h5>
+            </div>
+            <div class="card-body">
+                <p>Comparte el siguiente enlace con el cliente para que pueda evaluar el servicio:</p>
+                
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="enlaceEvaluacion" value="{{ enlace }}" readonly>
+                    <button class="btn btn-outline-secondary" type="button" onclick="copiarEnlace()">Copiar</button>
+                </div>
+                
+                <div class="mt-3">
+                    <p>Este enlace es para la placa: <strong>{{ placa }}</strong></p>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="/" class="btn btn-primary">Volver al Inicio</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copiarEnlace() {
+    var copyText = document.getElementById("enlaceEvaluacion");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    alert("Enlace copiado al portapapeles");
+}
+</script>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <h1 class="mb-4">Evaluación del Servicio</h1>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Califica nuestro servicio - Vehículo: {{ placa }}</h5>
+            </div>
+            <div class="card-body">
+                {% if servicios %}
+                <form action="{{ url_for('evaluar_servicio', placa=placa) }}" method="post">
+                    <div class="mb-3">
+                        <label for="servicio_id" class="form-label">Selecciona el servicio a evaluar</label>
+                        <select class="form-select" id="servicio_id" name="servicio_id" required>
+                            <option value="" selected disabled>Seleccionar servicio...</option>
+                            {% for servicio in servicios %}
+                            <option value="{{ servicio.ID }}">
+                                {{ servicio.fecha.strftime('%d-%m-%Y') }} - {{ servicio.tipo_lavado }} ({{ servicio.tipo_vehiculo }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Tiempo de espera</label>
+                        <div class="rating">
+                            {% for i in range(1, 6) %}
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tiempo_espera" id="tiempo_{{ i }}" value="{{ i }}" required>
+                                <label class="form-check-label" for="tiempo_{{ i }}">{{ i }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="small text-muted">1 = Muy insatisfecho, 5 = Muy satisfecho</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Amabilidad del personal</label>
+                        <div class="rating">
+                            {% for i in range(1, 6) %}
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="amabilidad_personal" id="amabilidad_{{ i }}" value="{{ i }}" required>
+                                <label class="form-check-label" for="amabilidad_{{ i }}">{{ i }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="small text-muted">1 = Muy insatisfecho, 5 = Muy satisfecho</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Calidad del servicio</label>
+                        <div class="rating">
+                            {% for i in range(1, 6) %}
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="calidad_servicio" id="calidad_{{ i }}" value="{{ i }}" required>
+                                <label class="form-check-label" for="calidad_{{ i }}">{{ i }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="small text-muted">1 = Muy insatisfecho, 5 = Muy satisfecho</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Enviar Evaluación</button>
+                </form>
+                {% else %}
+                <div class="alert alert-info">
+                    No se encontraron servicios completados para la placa {{ placa }}. Asegúrate de que la placa es correcta.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <h1 class="mb-4">Acceso de Proveedores</h1>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Iniciar Sesión</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('login_proveedor') }}" method="post">
+                    <div class="mb-3">
+                        <label for="correo" class="form-label">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="correo" name="correo" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Contraseña</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                    </div>
+                </form>
+                
+                <div class="mt-3 text-center">
+                    <p>¿No tienes una cuenta? <a href="{{ url_for('registro_proveedor') }}">Regístrate aquí</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
